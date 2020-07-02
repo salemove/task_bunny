@@ -88,10 +88,21 @@ defmodule TaskBunny.Config do
           true
         end
 
+      include_meta_in_perform =
+        if queue[:worker] && is_boolean(queue[:worker][:include_meta_in_perform]) do
+          queue[:worker][:include_meta_in_perform]
+        else
+          nil
+        end
+
+      IO.puts("RESOLVE")
+      IO.inspect(queue[:worker])
+      IO.inspect(include_meta_in_perform)
       [
         queue: queue[:name],
         concurrency: concurrency,
         store_rejected_jobs: store_rejected_jobs,
+        include_meta_in_perform: include_meta_in_perform,
         host: queue[:host] || :default
       ]
     end)

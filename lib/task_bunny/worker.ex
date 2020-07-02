@@ -29,6 +29,7 @@ defmodule TaskBunny.Worker do
           host: atom,
           concurrency: integer,
           store_rejected_jobs: boolean,
+          include_meta_in_perform: boolean,
           channel: AMQP.Channel.t() | nil,
           consumer_tag: String.t() | nil,
           runners: integer,
@@ -43,6 +44,7 @@ defmodule TaskBunny.Worker do
             host: :default,
             concurrency: 1,
             store_rejected_jobs: true,
+            include_meta_in_perform: nil,
             channel: nil,
             consumer_tag: nil,
             runners: 0,
@@ -60,8 +62,10 @@ defmodule TaskBunny.Worker do
       host: config[:host] || :default,
       queue: config[:queue],
       concurrency: config[:concurrency],
-      store_rejected_jobs: Keyword.get(config, :store_rejected_jobs, true)
+      store_rejected_jobs: Keyword.get(config, :store_rejected_jobs, true),
+      include_meta_in_perform: Keyword.get(config, :include_meta_in_perform, false)
     }
+    |> IO.inspect()
     |> start_link()
   end
 
@@ -151,8 +155,16 @@ defmodule TaskBunny.Worker do
     case Message.decode(body) do
       {:ok, decoded} ->
         Logger.debug(log_msg("basic_deliver", state, body: body))
+        payload = decoded["payload"]
 
-        JobRunner.invoke(decoded["job"], decoded["payload"], {body, meta})
+        payload =
+          if state.include_meta_in_perform do
+            {payload, meta}
+          else
+            payload
+          end
+
+        JobRunner.invoke(decoded["job"], payload, {body, meta})
 
         {:noreply, %{state | runners: state.runners + 1}}
 
