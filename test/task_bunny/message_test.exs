@@ -55,12 +55,13 @@ defmodule TaskBunny.MessageTest do
     @tag timeout: 1000
     test "adds error information to the message" do
       message = Message.encode!(NameJob, %{"name" => "Joe"})
+      {:current_stacktrace, stacktrace} = Process.info(self(), :current_stacktrace)
 
       error = %JobError{
         error_type: :return_value,
         return_value: {:error, :test_error},
         failed_count: 0,
-        stacktrace: System.stacktrace(),
+        stacktrace: stacktrace,
         raw_body: "abcdefg"
       }
 
