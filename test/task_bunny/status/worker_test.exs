@@ -51,7 +51,12 @@ defmodule TaskBunny.Status.WorkerTest do
     mock_config()
     JobTestHelper.setup()
 
-    TaskBunny.Supervisor.start_link(@supervisor, @worker_supervisor, @publisher)
+    TaskBunny.Supervisor.start_link(
+      name: @supervisor,
+      wsv_name: @worker_supervisor,
+      ps_name: @publisher
+    )
+
     JobTestHelper.wait_for_connection(@host)
 
     Queue.declare_with_subqueues(:default, @queue1)

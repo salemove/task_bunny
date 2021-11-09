@@ -17,7 +17,7 @@ defmodule TaskBunny do
 
     # Define workers and child supervisors to be supervised
     children = [
-      supervisor(TaskBunny.Supervisor, [])
+      TaskBunny.Supervisor
     ]
 
     opts = [strategy: :one_for_one, name: TaskBunny]
