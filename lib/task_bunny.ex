@@ -3,7 +3,7 @@ defmodule TaskBunny do
   # for more information on OTP Applications
   @moduledoc false
 
-  @json_library Application.get_env(:task_bunny, :json_library, Poison)
+  @json_library Application.compile_env(:task_bunny, :json_library, Poison)
 
   use Application
 

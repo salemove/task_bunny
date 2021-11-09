@@ -87,8 +87,8 @@ defmodule TaskBunny.Mixfile do
       {:poison, "~> 2.0 or ~> 3.0"},
 
       # dev/test
-      {:credo, "~> 0.6", only: [:dev, :test]},
-      {:dialyxir, "~> 0.4", only: [:dev], runtime: false},
+      {:credo, "~> 1.5", only: [:dev, :test]},
+      {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.14", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},
       {:inch_ex, "~> 0.5", only: [:dev, :test]},
