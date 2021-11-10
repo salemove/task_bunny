@@ -94,7 +94,6 @@ defmodule TaskBunny.Mixfile do
       {:dialyxir, "~> 1.1", only: [:dev], runtime: false},
       {:ex_doc, "~> 0.14", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},
-      {:inch_ex, "~> 0.5", only: [:dev, :test]},
       {:logger_file_backend, "~> 0.0.9", only: :test},
       {:meck, "~> 0.8.13", only: :test},
       {:poolboy, "~> 1.5"}
