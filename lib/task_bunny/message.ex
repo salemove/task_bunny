@@ -34,7 +34,7 @@ defmodule TaskBunny.Message do
     %{
       "job" => encode_job(job),
       "payload" => payload,
-      "created_at" => DateTime.utc_now()
+      "created_at" => DateTime.to_iso8601(DateTime.utc_now())
     }
   end
 
