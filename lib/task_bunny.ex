@@ -3,7 +3,7 @@ defmodule TaskBunny do
   # for more information on OTP Applications
   @moduledoc false
 
-  @json_library Application.get_env(:task_bunny, :json_library, Poison)
+  @json_library Application.compile_env(:task_bunny, :json_library, Poison)
 
   use Application
 
@@ -17,7 +17,7 @@ defmodule TaskBunny do
 
     # Define workers and child supervisors to be supervised
     children = [
-      supervisor(TaskBunny.Supervisor, [])
+      TaskBunny.Supervisor
     ]
 
     opts = [strategy: :one_for_one, name: TaskBunny]

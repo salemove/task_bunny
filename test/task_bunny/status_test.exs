@@ -26,7 +26,12 @@ defmodule TaskBunny.StatusTest do
 
     mock_config()
     JobTestHelper.setup()
-    TaskBunny.Supervisor.start_link(@supervisor, @worker_supervisor, @publisher)
+
+    TaskBunny.Supervisor.start_link(
+      name: @supervisor,
+      wsv_name: @worker_supervisor,
+      ps_name: @publisher
+    )
 
     on_exit(fn ->
       :meck.unload()

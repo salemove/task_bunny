@@ -123,12 +123,12 @@ defmodule TaskBunny.Job do
   @callback retry_interval(integer) :: integer
 
   require Logger
-  alias TaskBunny.{Config, Queue, Job, Message, Publisher}
+  alias TaskBunny.{Config, Job, Message, Publisher, Queue}
 
   alias TaskBunny.{
-    Publisher.PublishError,
     Connection.ConnectError,
-    Job.QueueNotFoundError
+    Job.QueueNotFoundError,
+    Publisher.PublishError
   }
 
   defmacro __using__(_options \\ []) do

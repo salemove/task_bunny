@@ -19,17 +19,19 @@ defmodule TaskBunny.WorkerSupervisor do
   end
 
   @doc false
-  @spec init(list) :: {:ok, {:supervisor.sup_flags(), [Supervisor.Spec.spec()]}} | :ignore
+  @impl true
   def init([]) do
-    Config.workers()
-    |> Enum.map(fn config ->
-      worker(
-        Worker,
-        [config],
-        id: "task_bunny.worker.#{config[:queue]}"
-      )
-    end)
-    |> supervise(strategy: :one_for_one)
+    children =
+      Config.workers()
+      |> Enum.map(fn config ->
+        %{
+          id: "task_bunny.worker.#{config[:queue]}",
+          type: :worker,
+          start: {Worker, :start_link, [config]}
+        }
+      end)
+
+    Supervisor.init(children, strategy: :one_for_one)
   end
 
   @doc """

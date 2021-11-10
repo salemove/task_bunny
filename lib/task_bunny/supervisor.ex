@@ -11,25 +11,30 @@ defmodule TaskBunny.Supervisor do
   configure child processes based on configuration file.
   """
   use Supervisor
-  alias TaskBunny.{Connection, Config, Initializer, WorkerSupervisor, PublisherWorker}
+  alias TaskBunny.{Config, Connection, Initializer, PublisherWorker, WorkerSupervisor}
 
   @doc false
-  @spec start_link(atom, atom) :: {:ok, pid} | {:error, term}
-  def start_link(name \\ __MODULE__, wsv_name \\ WorkerSupervisor, ps_name \\ :publisher) do
+  @spec start_link(Keyword.t()) :: {:ok, pid} | {:error, term}
+  def start_link(opts) do
+    name = Keyword.get(opts, :name, __MODULE__)
+    wsv_name = Keyword.get(opts, :wsv_name, WorkerSupervisor)
+    ps_name = Keyword.get(opts, :ps_name, :publisher)
     Supervisor.start_link(__MODULE__, [wsv_name, ps_name], name: name)
   end
 
   @doc false
-  @spec init(list()) ::
-          {:ok, {:supervisor.sup_flags(), [Supervisor.Spec.spec()]}}
-          | :ignore
+  @impl true
   def init([wsv_name, ps_name]) do
     # Add Connection severs for each hosts
     connections =
       Enum.map(
         Config.hosts(),
         fn host ->
-          worker(Connection, [host], id: make_ref())
+          %{
+            id: make_ref(),
+            type: :worker,
+            start: {Connection, :start_link, [host]}
+          }
         end
       )
 
@@ -38,14 +43,21 @@ defmodule TaskBunny.Supervisor do
     children =
       case Initializer.alive?() do
         true -> connections ++ publisher
-        false -> connections ++ publisher ++ [worker(Initializer, [false])]
+        false -> connections ++ publisher ++ [{Initializer, false}]
       end
 
     # Define workers and child supervisors to be supervised
     children =
       case {Config.auto_start?(), Config.disable_worker?()} do
         {true, false} ->
-          children ++ [supervisor(WorkerSupervisor, [wsv_name])]
+          children ++
+            [
+              %{
+                id: WorkerSupervisor,
+                type: :supervisor,
+                start: {WorkerSupervisor, :start_link, [wsv_name]}
+              }
+            ]
 
         {true, true} ->
           # Only connections
@@ -55,7 +67,7 @@ defmodule TaskBunny.Supervisor do
           []
       end
 
-    supervise(children, strategy: :one_for_all)
+    Supervisor.init(children, strategy: :one_for_all)
   end
 
   defp publisher_config(name) do
