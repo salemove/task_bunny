@@ -84,7 +84,10 @@ defmodule TaskBunny.Mixfile do
   defp deps do
     [
       {:amqp, "~> 0.3.1"},
-      {:poison, "~> 2.0 or ~> 3.0"},
+
+      # Optional dependencies
+      {:poison, "~> 4.0 or ~> 5.0", optional: true},
+      {:jason, "~> 1.0", optional: true},
 
       # dev/test
       {:credo, "~> 1.5", only: [:dev, :test]},

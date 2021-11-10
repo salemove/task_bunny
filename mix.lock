@@ -23,7 +23,7 @@
   "metrics": {:hex, :metrics, "1.0.1", "25f094dea2cda98213cecc3aeff09e940299d950904393b2a29d191c346a8486", [:rebar3], [], "hexpm", "69b09adddc4f74a40716ae54d140f93beb0fb8978d8636eaded0c31b6f099f16"},
   "mimerl": {:hex, :mimerl, "1.0.2", "993f9b0e084083405ed8252b99460c4f0563e41729ab42d9074fd5e52439be88", [:rebar3], [], "hexpm", "7a4c8e1115a2732a67d7624e28cf6c9f30c66711a9e92928e745c255887ba465"},
   "nimble_parsec": {:hex, :nimble_parsec, "0.4.0", "ee261bb53214943679422be70f1658fff573c5d0b0a1ecd0f18738944f818efe", [:mix], [], "hexpm", "ebb595e19456a72786db6dcd370d320350cb624f0b6203fcc7e23161d49b0ffb"},
-  "poison": {:hex, :poison, "3.1.0", "d9eb636610e096f86f25d9a46f35a9facac35609a7591b3be3326e99a0484665", [:mix], [], "hexpm", "fec8660eb7733ee4117b85f55799fd3833eb769a6df71ccf8903e8dc5447cfce"},
+  "poison": {:hex, :poison, "5.0.0", "d2b54589ab4157bbb82ec2050757779bfed724463a544b6e20d79855a9e43b24", [:mix], [{:decimal, "~> 2.0", [hex: :decimal, repo: "hexpm", optional: true]}], "hexpm", "11dc6117c501b80c62a7594f941d043982a1bd05a1184280c0d9166eb4d8d3fc"},
   "poolboy": {:hex, :poolboy, "1.5.1", "6b46163901cfd0a1b43d692657ed9d7e599853b3b21b95ae5ae0a777cf9b6ca8", [:rebar], [], "hexpm", "8f7168911120e13419e086e78d20e4d1a6776f1eee2411ac9f790af10813389f"},
   "rabbit_common": {:hex, :rabbit_common, "3.6.14", "dc134cd7228f656367e6e6ac88f1f4ef4a63d8a78a2238f52990a4de467708a1", [:make, :rebar3], [{:recon, "2.3.2", [hex: :recon, repo: "hexpm", optional: false]}], "hexpm", "39211182a1a0982a491f6cdf3262e8c29b7a50cd1e94b39b978b0a91b545532c"},
   "recon": {:hex, :recon, "2.3.2", "4444c879be323b1b133eec5241cb84bd3821ea194c740d75617e106be4744318", [:rebar3], [], "hexpm", "a6fcfbdabe1aef9119b871304846b1ce282d9a4124bcddafc7616c1a256c7596"},

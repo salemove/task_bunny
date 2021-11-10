@@ -44,8 +44,8 @@ defmodule TaskBunny.Message do
   @spec decode(String.t()) :: {:ok, map} | {:error, any}
   def decode(message) do
     case TaskBunny.json_library().decode(message) do
-      {:ok, decoded} ->
-        job = decode_job(decoded["job"])
+      {:ok, %{"job" => encoded_job} = decoded} ->
+        job = decode_job(encoded_job)
 
         if job && Code.ensure_loaded?(job) do
           {:ok, %{decoded | "job" => job}}
@@ -53,11 +53,12 @@ defmodule TaskBunny.Message do
           {:error, :job_not_loaded}
         end
 
-      error ->
-        {:error, {:poison_decode_error, error}}
+      {:ok, _} ->
+        {:error, {:decode_error, "job key is not present"}}
+
+      {:error, error} ->
+        {:error, {:decode_error, error}}
     end
-  rescue
-    error -> {:error, {:decode_exception, error}}
   end
 
   @doc """
@@ -119,7 +120,7 @@ defmodule TaskBunny.Message do
   def add_error_log(message, error) when is_map(message) do
     error = %{
       "result" => JobError.get_result_info(error),
-      "failed_at" => DateTime.utc_now(),
+      "failed_at" => DateTime.to_iso8601(DateTime.utc_now()),
       "host" => host(),
       "pid" => inspect(self())
     }
