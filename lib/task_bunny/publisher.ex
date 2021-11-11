@@ -38,13 +38,23 @@ defmodule TaskBunny.Publisher do
     routing_key = queue
     options = Keyword.merge([persistent: true], options)
 
-    case :poolboy.transaction(
-           :publisher,
-           &GenServer.call(&1, {:publish, host, exchange, routing_key, message, options}),
-           @poolboy_timeout
-         ) do
-      :ok -> :ok
-      error -> raise PublishError, inner_error: error
-    end
+    TaskBunny.Tracer.with_send_span(exchange, routing_key, fn tracing_headers ->
+      options =
+        if options[:disable_trace_propagation] do
+          options
+        else
+          new_headers = Keyword.merge(options[:headers] || [], tracing_headers)
+          Keyword.put(options, :headers, new_headers)
+        end
+
+      case :poolboy.transaction(
+             :publisher,
+             &GenServer.call(&1, {:publish, host, exchange, routing_key, message, options}),
+             @poolboy_timeout
+           ) do
+        :ok -> :ok
+        error -> raise PublishError, inner_error: error
+      end
+    end)
   end
 end
