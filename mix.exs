@@ -83,7 +83,8 @@ defmodule TaskBunny.Mixfile do
 
   defp deps do
     [
-      {:amqp, "~> 0.3.1"},
+      {:amqp, "~> 3.0"},
+      {:poolboy, "~> 1.5"},
 
       # Optional dependencies
       {:poison, "~> 4.0 or ~> 5.0", optional: true},
@@ -95,8 +96,7 @@ defmodule TaskBunny.Mixfile do
       {:ex_doc, "~> 0.14", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},
       {:logger_file_backend, "~> 0.0.9", only: :test},
-      {:meck, "~> 0.8.13", only: :test},
-      {:poolboy, "~> 1.5"}
+      {:meck, "~> 0.8.13", only: :test}
     ]
   end
 end

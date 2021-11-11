@@ -218,8 +218,6 @@ defmodule TaskBunny.Connection do
   @spec do_connect(atom) :: {:ok, %AMQP.Connection{}} | {:error, any}
   defp do_connect(host) do
     AMQP.Connection.open(Config.connect_options(host))
-  rescue
-    error -> {:error, error}
   end
 
   @spec pname(atom) :: atom
