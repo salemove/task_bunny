@@ -85,6 +85,7 @@ defmodule TaskBunny.Mixfile do
     [
       {:amqp, "~> 3.0"},
       {:poolboy, "~> 1.5"},
+      {:opentelemetry_api, "~> 1.0.0-rc.3"},
 
       # Optional dependencies
       {:poison, "~> 4.0 or ~> 5.0", optional: true},
@@ -96,7 +97,8 @@ defmodule TaskBunny.Mixfile do
       {:ex_doc, "~> 0.14", only: :dev},
       {:excoveralls, "~> 0.5", only: :test},
       {:logger_file_backend, "~> 0.0.9", only: :test},
-      {:meck, "~> 0.8.13", only: :test}
+      {:meck, "~> 0.8.13", only: :test},
+      {:opentelemetry, "~> 1.0.0-rc.3", only: [:test]}
     ]
   end
 end

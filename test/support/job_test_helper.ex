@@ -10,12 +10,20 @@ defmodule TaskBunny.JobTestHelper do
   defmodule TestJob do
     use TaskBunny.Job
 
+    require OpenTelemetry.Tracer
+
     def perform(payload) do
       Tracer.performed(payload)
 
       if payload["sleep"], do: :timer.sleep(payload["sleep"])
 
+      if payload["create_span"] do
+        OpenTelemetry.Tracer.with_span "job span" do
+        end
+      end
+
       cond do
+        payload["exception"] -> raise "unexpected error"
         payload["reject"] -> :reject
         payload["fail"] -> :error
         true -> :ok

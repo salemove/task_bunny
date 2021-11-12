@@ -34,18 +34,25 @@ defmodule TaskBunny.JobRunner do
   def invoke(job, payload, message) do
     caller = self()
 
+    ctx = OpenTelemetry.Ctx.get_current()
+    span_ctx = OpenTelemetry.Tracer.current_span_ctx()
+
     timeout_error = {:error, JobError.handle_timeout(job, payload)}
 
     timer =
       Process.send_after(
         caller,
-        {:job_finished, timeout_error, message},
+        {:job_finished, timeout_error, message, {ctx, span_ctx}},
         job.timeout
       )
 
     pid =
       spawn(fn ->
-        send(caller, {:job_finished, run_job(job, payload), message})
+        # Attach the context to allow creating child spans inside the job.
+        OpenTelemetry.Ctx.attach(ctx)
+        OpenTelemetry.Tracer.set_current_span(span_ctx)
+
+        send(caller, {:job_finished, run_job(job, payload), message, {ctx, span_ctx}})
         Process.cancel_timer(timer)
       end)
 

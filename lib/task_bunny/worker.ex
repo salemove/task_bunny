@@ -9,6 +9,7 @@ defmodule TaskBunny.Worker do
 
   use GenServer
   require Logger
+  require OpenTelemetry.Tracer
 
   alias TaskBunny.{
     Connection,
@@ -148,11 +149,15 @@ defmodule TaskBunny.Worker do
   # Called when message was delivered from RabbitMQ.
   # Invokes a job here.
   def handle_info({:basic_deliver, body, meta}, state) do
+    TaskBunny.Tracer.start_process_span(meta)
+
     case Message.uncompress(body, meta) do
       {:ok, uncompressed_body} ->
         decode_body(uncompressed_body, meta, state)
 
       {:error, error} ->
+        TaskBunny.Tracer.fail_process_span(inspect(error))
+
         Logger.error(log_msg("uncompress error", state, body: body, meta: meta, error: error))
 
         {:noreply, update_job_stats(state, :failed)}
@@ -161,12 +166,16 @@ defmodule TaskBunny.Worker do
 
   # Called when job was done.
   # Acknowledge to RabbitMQ.
-  def handle_info({:job_finished, result, {body, meta}}, state) do
+  def handle_info({:job_finished, result, {body, meta}, {ctx, span_ctx}}, state) do
     Logger.debug(log_msg("job_finished", state, body: body, meta: meta))
+
+    OpenTelemetry.Ctx.attach(ctx)
+    OpenTelemetry.Tracer.set_current_span(span_ctx)
 
     case succeeded?(result) do
       true ->
         Consumer.ack(state.channel, meta, true)
+        TaskBunny.Tracer.finish_process_span()
 
         {:noreply, update_job_stats(state, :succeeded)}
 
@@ -259,6 +268,7 @@ defmodule TaskBunny.Worker do
     new_body = Message.add_error_log(body, job_error)
 
     FailureBackend.report_job_error(job_error)
+    TaskBunny.Tracer.fail_process_span(job_error)
 
     if reject?(job, failed_count, job_error) do
       reject_message(state, new_body, meta)
