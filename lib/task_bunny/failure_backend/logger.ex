@@ -73,7 +73,7 @@ defmodule TaskBunny.FailureBackend.Logger do
     if rejected do
       Logger.error(message)
     else
-      Logger.warn(message)
+      Logger.warning(message)
     end
   end
 
