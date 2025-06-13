@@ -83,7 +83,7 @@ defmodule TaskBunny.Mixfile do
 
   defp deps do
     [
-      {:amqp, "~> 3.0"},
+      {:amqp, "~> 4.0"},
       {:poolboy, "~> 1.5"},
       {:opentelemetry_api, "~> 1.0.0-rc.3"},
 
