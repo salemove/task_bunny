@@ -26,7 +26,7 @@ defmodule TaskBunny.Queue do
   - normal_jobs.rejected: a queue that holds jobs failed and won't be retried
 
   """
-  @spec declare_with_subqueues(%AMQP.Connection{} | atom, String.t()) :: {map, map, map, map}
+  @spec declare_with_subqueues(AMQP.Connection.t() | atom, String.t()) :: {map, map, map, map}
   def declare_with_subqueues(host, work_queue) when is_atom(host) do
     conn = TaskBunny.Connection.get_connection!(host)
     declare_with_subqueues(conn, work_queue)
@@ -72,7 +72,7 @@ defmodule TaskBunny.Queue do
   @doc """
   Deletes the queue and its subqueues.
   """
-  @spec delete_with_subqueues(%AMQP.Connection{} | atom, String.t()) :: :ok
+  @spec delete_with_subqueues(AMQP.Connection.t() | atom, String.t()) :: :ok
   def delete_with_subqueues(host, work_queue) when is_atom(host) do
     conn = TaskBunny.Connection.get_connection!(host)
     delete_with_subqueues(conn, work_queue)
@@ -92,7 +92,7 @@ defmodule TaskBunny.Queue do
 
   @doc false
   # Declares a single queue with the options
-  @spec declare(%AMQP.Channel{}, String.t(), keyword) :: map
+  @spec declare(AMQP.Channel.t(), String.t(), keyword) :: map
   def declare(channel, queue, options \\ []) do
     options = options ++ [durable: true]
     {:ok, state} = AMQP.Queue.declare(channel, queue, options)
@@ -103,7 +103,7 @@ defmodule TaskBunny.Queue do
   @doc """
   Returns the message count and consumer count for the given queue.
   """
-  @spec state(%AMQP.Connection{} | atom, String.t()) :: map
+  @spec state(AMQP.Connection.t() | atom, String.t()) :: map
   def state(host_or_conn \\ :default, queue)
 
   def state(host, queue) when is_atom(host) do
