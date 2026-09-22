@@ -229,6 +229,9 @@ defmodule TaskBunny.Worker do
   end
 
   @spec pname(String.t()) :: atom
+  # queue comes from the worker declaration, read once at boot, so the name
+  # family is bounded by that list and no message can extend it.
+  # sobelow_skip ["DOS.StringToAtom"]
   defp pname(queue) do
     String.to_atom("TaskBunny.Worker.#{queue}")
   end

@@ -221,6 +221,9 @@ defmodule TaskBunny.Connection do
   end
 
   @spec pname(atom) :: atom
+  # host is one of the connection hosts named in config, so it is already an
+  # atom before this runs and the name family is bounded by that list.
+  # sobelow_skip ["DOS.StringToAtom"]
   defp pname(host) do
     ("TaskBunny.Connection." <> Atom.to_string(host))
     |> String.to_atom()
