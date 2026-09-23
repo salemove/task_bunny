@@ -27,7 +27,7 @@ However you might want to try out TaskBunny in the following cases:
 
 ### 1. Check requirements
 
-- Elixir 1.7+
+- Elixir 1.14+ on OTP 26+
 - RabbitMQ 3.6.0 or greater
 
 ### 2. Install TaskBunny
@@ -36,7 +36,7 @@ Edit `mix.exs` and add `task_bunny` to your list of dependencies and application
 
 ```elixir
 def deps do
-  [{:task_bunny, "~> 0.3.2"}]
+  [{:task_bunny, git: "https://github.com/salemove/task_bunny.git", ref: "<commit>"}]
 end
 
 def application do
