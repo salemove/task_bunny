@@ -1,10 +1,5 @@
 defmodule TaskBunny.Status.Worker do
   @moduledoc false
-  # Functions that handles the Worker status.
-  #
-  # This module is private to TaskBunny.
-  # It's aimed to provide useful stats to Wobserver integration.
-  #
 
   @typedoc ~S"""
   The Worker status contains the follow fields:
@@ -35,17 +30,4 @@ defmodule TaskBunny.Status.Worker do
               succeeded: 0,
               rejected: 0
             }
-
-  @doc ~S"""
-  Returns the Worker status.
-  """
-  @spec get({any, pid, atom, list}) :: TaskBunny.Status.Worker.t()
-  def get({_name, pid, _atom, _list}) do
-    get(pid)
-  end
-
-  @spec get(pid) :: TaskBunny.Status.Worker.t()
-  def get(pid) do
-    GenServer.call(pid, :status)
-  end
 end

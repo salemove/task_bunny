@@ -503,12 +503,6 @@ The following plugins will help you use RabbitMQ with TaskBunny.
 - [Management Plugin](http://www.rabbitmq.com/management.html): provides an HTTP-based API for management and monitoring of your RabbitMQ server, along with a browser-based UI and a command line tool, rabbitmqadmin.
 - [Shovel Plugin](http://www.rabbitmq.com/shovel.html): helps you to move messages(job) from a queue to another queue.
 
-#### Wobserver integration
-
-TaskBunny automatically integrates with [Wobserver](https://github.com/shinyscorpion/wobserver).
-All worker and connection information will be added as a page on the web interface.
-The current amount of job runners and job success, failure, and reject totals are added to the `/metrics` endpoint.
-
 ## Copyright and License
 
 Copyright (c) 2017, SQUARE ENIX LTD.

@@ -31,7 +31,6 @@ defmodule TaskBunny.Mixfile do
       ],
       description: @description,
       package: package(),
-      xref: [exclude: [Wobserver]],
       aliases: aliases()
     ]
   end
