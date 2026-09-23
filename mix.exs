@@ -88,7 +88,7 @@ defmodule TaskBunny.Mixfile do
       {:opentelemetry_api, "~> 1.0.0-rc.3"},
 
       # Optional dependencies
-      {:poison, "~> 4.0 or ~> 5.0", optional: true},
+      {:poison, "~> 4.0 or ~> 5.0 or ~> 6.0", optional: true},
       {:jason, "~> 1.0", optional: true},
 
       # dev/test
