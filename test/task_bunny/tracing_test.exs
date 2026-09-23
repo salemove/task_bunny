@@ -82,12 +82,12 @@ defmodule TaskBunny.TracingTest do
                       attributes: attributes
                     )}
 
-    assert [
+    assert %{
              "messaging.destination": "",
              "messaging.destination_kind": "queue",
              "messaging.rabbitmq_routing_key": "task_bunny.tracing_test",
              "messaging.system": "rabbitmq"
-           ] == List.keysort(attributes, 0)
+           } == :otel_attributes.map(attributes)
 
     # Process span
     assert_receive {:span,
@@ -100,13 +100,13 @@ defmodule TaskBunny.TracingTest do
                       attributes: attributes
                     )}
 
-    assert [
+    assert %{
              "messaging.destination": "",
              "messaging.destination_kind": "queue",
              "messaging.operation": "process",
              "messaging.rabbitmq_routing_key": "task_bunny.tracing_test",
              "messaging.system": "rabbitmq"
-           ] == List.keysort(attributes, 0)
+           } == :otel_attributes.map(attributes)
 
     GenServer.stop(worker)
   end
@@ -197,17 +197,16 @@ defmodule TaskBunny.TracingTest do
                       name: ".task_bunny.tracing_test process",
                       kind: :consumer,
                       status: ^expected_status,
-                      events: [
-                        event(
-                          name: "exception",
-                          attributes: [
-                            {"exception.type", "Elixir.RuntimeError"},
-                            {"exception.message", "unexpected error"},
-                            {"exception.stacktrace", _stacktrace}
-                          ]
-                        )
-                      ]
+                      events: events
                     )}
+
+    assert [event(name: :exception, attributes: event_attributes)] = :otel_events.list(events)
+
+    assert %{
+             "exception.type": "Elixir.RuntimeError",
+             "exception.message": "unexpected error",
+             "exception.stacktrace": _stacktrace
+           } = :otel_attributes.map(event_attributes)
 
     GenServer.stop(worker)
   end
@@ -225,8 +224,10 @@ defmodule TaskBunny.TracingTest do
                       name: ".task_bunny.tracing_test process",
                       kind: :consumer,
                       status: ^expected_status,
-                      events: []
+                      events: events
                     )}
+
+    assert [] == :otel_events.list(events)
 
     GenServer.stop(worker)
   end
@@ -244,8 +245,10 @@ defmodule TaskBunny.TracingTest do
                       name: ".task_bunny.tracing_test process",
                       kind: :consumer,
                       status: ^expected_status,
-                      events: []
+                      events: events
                     )}
+
+    assert [] == :otel_events.list(events)
 
     GenServer.stop(worker)
   end
