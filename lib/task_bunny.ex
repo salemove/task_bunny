@@ -7,13 +7,9 @@ defmodule TaskBunny do
 
   use Application
 
-  alias TaskBunny.Status
-
   @spec start(atom, term) :: {:ok, pid} | {:ok, pid, any} | {:error, term}
   def start(_type, _args) do
     import Supervisor.Spec, warn: false
-
-    register_metrics()
 
     # Define workers and child supervisors to be supervised
     children = [
@@ -25,11 +21,4 @@ defmodule TaskBunny do
   end
 
   def json_library, do: @json_library
-
-  defp register_metrics do
-    if Code.ensure_loaded(Wobserver) == {:module, Wobserver} do
-      Wobserver.register(:page, {"Task Bunny", :taskbunny, &Status.page/0})
-      Wobserver.register(:metric, [&Status.metrics/0])
-    end
-  end
 end

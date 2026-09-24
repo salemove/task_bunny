@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+* Remove the Wobserver integration and `TaskBunny.Status`, which only fed it.
+* Remove the private `mix analyze` task.
+* Accept any stable OpenTelemetry 1.x API (`~> 1.0`) instead of `~> 1.0.0-rc.3`.
+* Accept poison 6.0 as the optional JSON library.
+
 ## 0.3.4
 
 * Managing publisher connections with poolboy. [#65](https://github.com/shinyscorpion/task_bunny/pull/65).

@@ -27,7 +27,7 @@ However you might want to try out TaskBunny in the following cases:
 
 ### 1. Check requirements
 
-- Elixir 1.7+
+- Elixir 1.14+ on OTP 26+
 - RabbitMQ 3.6.0 or greater
 
 ### 2. Install TaskBunny
@@ -36,7 +36,7 @@ Edit `mix.exs` and add `task_bunny` to your list of dependencies and application
 
 ```elixir
 def deps do
-  [{:task_bunny, "~> 0.3.2"}]
+  [{:task_bunny, git: "https://github.com/salemove/task_bunny.git", ref: "<commit>"}]
 end
 
 def application do
@@ -502,12 +502,6 @@ The following plugins will help you use RabbitMQ with TaskBunny.
 
 - [Management Plugin](http://www.rabbitmq.com/management.html): provides an HTTP-based API for management and monitoring of your RabbitMQ server, along with a browser-based UI and a command line tool, rabbitmqadmin.
 - [Shovel Plugin](http://www.rabbitmq.com/shovel.html): helps you to move messages(job) from a queue to another queue.
-
-#### Wobserver integration
-
-TaskBunny automatically integrates with [Wobserver](https://github.com/shinyscorpion/wobserver).
-All worker and connection information will be added as a page on the web interface.
-The current amount of job runners and job success, failure, and reject totals are added to the `/metrics` endpoint.
 
 ## Copyright and License
 
