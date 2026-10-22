@@ -222,6 +222,71 @@ defmodule TaskBunny.WorkerTest do
     end
   end
 
+  describe "job validation" do
+    defmodule OtherJob do
+      use TaskBunny.Job
+
+      def perform(_payload), do: :ok
+    end
+
+    defp start_worker_for_jobs(jobs) do
+      {:ok, worker} =
+        Worker.start_link(queue: @queue, concurrency: 1, store_rejected_jobs: true, jobs: jobs)
+
+      worker
+    end
+
+    defp wait_for_message_count(queue, count) do
+      conn = Connection.get_connection!()
+
+      Enum.find_value(1..100, false, fn _ ->
+        if Queue.state(conn, queue).message_count == count do
+          true
+        else
+          :timer.sleep(10)
+          false
+        end
+      end)
+    end
+
+    test "rejects a job that is not configured for the queue" do
+      worker = start_worker_for_jobs([OtherJob])
+      [main, _retry, rejected, _scheduled] = all_queues()
+
+      TestJob.enqueue(%{"hello" => "world"}, queue: @queue)
+
+      assert wait_for_message_count(rejected, 1)
+      assert Queue.state(main).message_count == 0
+      assert JobTestHelper.performed_count() == 0
+
+      GenServer.stop(worker)
+    end
+
+    test "invokes a job that is configured for the queue" do
+      worker = start_worker_for_jobs(["TaskBunny.JobTestHelper.*"])
+      payload = %{"hello" => "world"}
+
+      TestJob.enqueue(payload, queue: @queue)
+      JobTestHelper.wait_for_perform()
+
+      assert JobTestHelper.performed_payloads() == [payload]
+
+      GenServer.stop(worker)
+    end
+
+    test "invokes any job when the queue is the default queue" do
+      worker = start_worker_for_jobs(:default)
+      payload = %{"hello" => "world"}
+
+      TestJob.enqueue(payload, queue: @queue)
+      JobTestHelper.wait_for_perform()
+
+      assert JobTestHelper.performed_payloads() == [payload]
+
+      GenServer.stop(worker)
+    end
+  end
+
   describe "delay" do
     test "invokes the job with the delay" do
       worker = start_worker()

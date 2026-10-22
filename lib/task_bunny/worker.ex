@@ -12,6 +12,7 @@ defmodule TaskBunny.Worker do
   require OpenTelemetry.Tracer
 
   alias TaskBunny.{
+    Config,
     Connection,
     Consumer,
     FailureBackend,
@@ -30,6 +31,7 @@ defmodule TaskBunny.Worker do
           host: atom,
           concurrency: integer,
           store_rejected_jobs: boolean,
+          jobs: atom | String.t() | list | nil,
           channel: AMQP.Channel.t() | nil,
           consumer_tag: String.t() | nil,
           runners: integer,
@@ -44,6 +46,7 @@ defmodule TaskBunny.Worker do
             host: :default,
             concurrency: 1,
             store_rejected_jobs: true,
+            jobs: nil,
             channel: nil,
             consumer_tag: nil,
             runners: 0,
@@ -61,7 +64,8 @@ defmodule TaskBunny.Worker do
       host: config[:host] || :default,
       queue: config[:queue],
       concurrency: config[:concurrency],
-      store_rejected_jobs: Keyword.get(config, :store_rejected_jobs, true)
+      store_rejected_jobs: Keyword.get(config, :store_rejected_jobs, true),
+      jobs: config[:jobs]
     }
     |> start_link()
   end
@@ -207,14 +211,14 @@ defmodule TaskBunny.Worker do
   end
 
   defp decode_body(body, meta, state) do
-    case Message.decode(body) do
-      {:ok, decoded} ->
-        Logger.debug(log_msg("basic_deliver", state, body: body))
+    with {:ok, decoded} <- Message.decode(body),
+         :ok <- check_job_accepted(decoded["job"], state) do
+      Logger.debug(log_msg("basic_deliver", state, body: body))
 
-        JobRunner.invoke(decoded["job"], decoded["payload"], {body, meta})
+      JobRunner.invoke(decoded["job"], decoded["payload"], {body, meta})
 
-        {:noreply, %{state | runners: state.runners + 1}}
-
+      {:noreply, %{state | runners: state.runners + 1}}
+    else
       error ->
         Logger.error(
           log_msg("basic_deliver invalid body", state, body: body, meta: meta, error: error)
@@ -225,6 +229,15 @@ defmodule TaskBunny.Worker do
         # Needs state.runners + 1, because reject_payload does state.runners - 1
         state = %{state | runners: state.runners + 1}
         {:noreply, update_job_stats(state, :rejected)}
+    end
+  end
+
+  @spec check_job_accepted(atom, t) :: :ok | {:error, {:job_not_accepted, atom}}
+  defp check_job_accepted(job, state) do
+    if Config.accepts_job?(state.jobs, job) do
+      :ok
+    else
+      {:error, {:job_not_accepted, job}}
     end
   end
 
