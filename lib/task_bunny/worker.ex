@@ -230,6 +230,11 @@ defmodule TaskBunny.Worker do
         state = %{state | runners: state.runners + 1}
         {:noreply, update_job_stats(state, :rejected)}
     end
+  catch
+    kind, reason ->
+      # Needs state.runners + 1, because update_job_stats does state.runners - 1
+      state = %{state | runners: state.runners + 1}
+      reject_on_error(state, body, meta, kind, reason, __STACKTRACE__)
   end
 
   @spec check_job_accepted(atom, t) :: :ok | {:error, {:job_not_accepted, atom}}
@@ -288,12 +293,29 @@ defmodule TaskBunny.Worker do
 
     if reject?(job, failed_count, job_error) do
       reject_message(state, new_body, meta)
-      reject_callback(job, new_body)
+      reject_callback(state, job, new_body)
       {:noreply, update_job_stats(state, :rejected)}
     else
       retry_message(job, state, new_body, meta, failed_count)
       {:noreply, update_job_stats(state, :failed)}
     end
+  catch
+    kind, reason -> reject_on_error(state, body, meta, kind, reason, __STACKTRACE__)
+  end
+
+  defp reject_on_error(state, body, meta, kind, reason, stacktrace) do
+    TaskBunny.Tracer.fail_process_span(Exception.format_banner(kind, reason))
+
+    Logger.error(
+      log_msg("failed to handle message", state,
+        body: body,
+        meta: meta,
+        error: Exception.format(kind, reason, stacktrace)
+      )
+    )
+
+    reject_message(state, body, meta)
+    {:noreply, update_job_stats(state, :rejected)}
   end
 
   defp reject?(_, _, %{return_value: :reject}), do: true
@@ -325,7 +347,17 @@ defmodule TaskBunny.Worker do
     :ok
   end
 
-  defp reject_callback(job, body), do: job.on_reject(body)
+  defp reject_callback(state, job, body) do
+    job.on_reject(body)
+  catch
+    kind, reason ->
+      Logger.error(
+        log_msg("on_reject failed", state,
+          body: body,
+          error: Exception.format(kind, reason, __STACKTRACE__)
+        )
+      )
+  end
 
   defp log_msg(message, state, additional \\ nil) do
     message =
