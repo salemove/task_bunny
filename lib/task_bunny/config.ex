@@ -92,7 +92,8 @@ defmodule TaskBunny.Config do
         queue: queue[:name],
         concurrency: concurrency,
         store_rejected_jobs: store_rejected_jobs,
-        host: queue[:host] || :default
+        host: queue[:host] || :default,
+        jobs: queue[:jobs]
       ]
     end)
   end
@@ -127,6 +128,16 @@ defmodule TaskBunny.Config do
       queue[:jobs] == :default
     end)
   end
+
+  @doc """
+  Returns true if a queue configured with the given `jobs` accepts the job.
+
+  A queue configured as the default queue, or without any jobs, accepts all jobs.
+  """
+  @spec accepts_job?(atom | String.t() | list | nil, atom) :: boolean
+  def accepts_job?(nil, _job), do: true
+  def accepts_job?(:default, _job), do: true
+  def accepts_job?(jobs, job), do: match_job?(job, jobs)
 
   @spec match_job?(atom, atom | String.t() | list) :: boolean
   defp match_job?(job, condition)
