@@ -1,7 +1,7 @@
 defmodule TaskBunny.WorkerTest do
   use ExUnit.Case, async: false
   import TaskBunny.QueueTestHelper
-  alias TaskBunny.{Connection, Worker, Queue, JobTestHelper}
+  alias TaskBunny.{Connection, Worker, Publisher, Queue, JobTestHelper}
   alias JobTestHelper.TestJob
 
   @queue "task_bunny.worker_test"
@@ -217,6 +217,145 @@ defmodule TaskBunny.WorkerTest do
       assert main_count == 0
       assert retry_count == 0
       assert rejected_count == 1
+
+      GenServer.stop(worker)
+    end
+  end
+
+  describe "job validation" do
+    defmodule OtherJob do
+      use TaskBunny.Job
+
+      def perform(_payload), do: :ok
+    end
+
+    defp start_worker_for_jobs(jobs) do
+      {:ok, worker} =
+        Worker.start_link(queue: @queue, concurrency: 1, store_rejected_jobs: true, jobs: jobs)
+
+      worker
+    end
+
+    defp wait_for_message_count(queue, count) do
+      conn = Connection.get_connection!()
+
+      Enum.find_value(1..100, false, fn _ ->
+        if Queue.state(conn, queue).message_count == count do
+          true
+        else
+          :timer.sleep(10)
+          false
+        end
+      end)
+    end
+
+    test "rejects a job that is not configured for the queue" do
+      worker = start_worker_for_jobs([OtherJob])
+      [main, _retry, rejected, _scheduled] = all_queues()
+
+      TestJob.enqueue(%{"hello" => "world"}, queue: @queue)
+
+      assert wait_for_message_count(rejected, 1)
+      assert Queue.state(main).message_count == 0
+      assert JobTestHelper.performed_count() == 0
+
+      GenServer.stop(worker)
+    end
+
+    test "invokes a job that is configured for the queue" do
+      worker = start_worker_for_jobs(["TaskBunny.JobTestHelper.*"])
+      payload = %{"hello" => "world"}
+
+      TestJob.enqueue(payload, queue: @queue)
+      JobTestHelper.wait_for_perform()
+
+      assert JobTestHelper.performed_payloads() == [payload]
+
+      GenServer.stop(worker)
+    end
+
+    test "invokes any job when the queue is the default queue" do
+      worker = start_worker_for_jobs(:default)
+      payload = %{"hello" => "world"}
+
+      TestJob.enqueue(payload, queue: @queue)
+      JobTestHelper.wait_for_perform()
+
+      assert JobTestHelper.performed_payloads() == [payload]
+
+      GenServer.stop(worker)
+    end
+  end
+
+  describe "unexpected errors" do
+    defmodule RaisingOnRejectJob do
+      use TaskBunny.Job
+
+      def perform(_payload), do: :reject
+
+      def on_reject(_body), do: raise("unexpected error")
+    end
+
+    defp assert_keeps_consuming(worker, performed_count \\ 1) do
+      TestJob.enqueue(%{"hello" => "world"}, queue: @queue)
+      assert JobTestHelper.wait_for_perform(performed_count)
+      assert Process.alive?(worker)
+    end
+
+    test "rejects a message naming a loaded module that is not a job" do
+      worker = start_worker()
+      [main, _retry, rejected, _scheduled] = all_queues()
+
+      Publisher.publish!(:default, @queue, ~s({"job": "Enum", "payload": {}}))
+
+      assert wait_for_message_count(rejected, 1)
+      assert Queue.state(main).message_count == 0
+      assert_keeps_consuming(worker)
+
+      GenServer.stop(worker)
+    end
+
+    test "rejects a message with a job that is not a module name" do
+      worker = start_worker()
+      [main, _retry, rejected, _scheduled] = all_queues()
+
+      Publisher.publish!(:default, @queue, ~s({"job": 1, "payload": {}}))
+
+      assert wait_for_message_count(rejected, 1)
+      assert Queue.state(main).message_count == 0
+      assert_keeps_consuming(worker)
+
+      GenServer.stop(worker)
+    end
+
+    test "rejects a failed job whose message has malformed errors" do
+      worker = start_worker()
+      [main, retry, rejected, _scheduled] = all_queues()
+
+      Publisher.publish!(
+        :default,
+        @queue,
+        ~s({"job": "TaskBunny.JobTestHelper.TestJob", "payload": {"fail": true}, "errors": "x"})
+      )
+
+      assert wait_for_message_count(rejected, 1)
+      assert Queue.state(main).message_count == 0
+      assert Queue.state(retry).message_count == 0
+      assert_keeps_consuming(worker, 2)
+
+      GenServer.stop(worker)
+    end
+
+    test "keeps consuming when on_reject raises" do
+      worker = start_worker()
+      [main, _retry, rejected, _scheduled] = all_queues()
+
+      RaisingOnRejectJob.enqueue(%{}, queue: @queue)
+
+      assert wait_for_message_count(rejected, 1)
+      assert Queue.state(main).message_count == 0
+      assert_keeps_consuming(worker)
+      assert Queue.state(rejected).message_count == 1
 
       GenServer.stop(worker)
     end
