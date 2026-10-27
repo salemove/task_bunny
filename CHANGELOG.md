@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0
+
+* Workers reject a message whose job is not in the `jobs` of their queue. A
+  queue with `jobs: :default`, or without `jobs`, still accepts all jobs.
+* Workers reject a message they fail to handle, e.g. a malformed one, instead
+  of crashing. An error in `on_reject` is only logged.
+
 ## 0.4.0
 
 * Remove the Wobserver integration and `TaskBunny.Status`, which only fed it.
